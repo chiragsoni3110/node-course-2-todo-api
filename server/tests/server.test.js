@@ -1,6 +1,7 @@
 const expect = require("expect");
 const request = require("supertest");
 const { ObjectID } = require("mongodb");
+const _ = require("lodash");
 
 const { app } = require("./../server");
 const { Todo } = require("./../models/todo");
@@ -89,19 +90,59 @@ describe('GET /todos/:id', () => {
             }).end(done);
     });
 
-    it("should return 404 if todo not found",(done)=>{
+    it("should return 404 if todo not found", (done) => {
         var hexId = new ObjectID().toHexString();
 
         request(app)
-        .get(`/todos/${hexId}`)
-        .expect(404)
-        .end(done);
+            .get(`/todos/${hexId}`)
+            .expect(404)
+            .end(done);
     })
 
-    it("should return 404 for non-object ids ",(done)=>{
-         request(app)
-        .get("/todos/123abc")
-        .expect(404)
-        .end(done);
+    it("should return 404 for non-object ids ", (done) => {
+        request(app)
+            .get("/todos/123abc")
+            .expect(404)
+            .end(done);
+    })
+});
+
+describe('DELETE /todos/:id', () => {
+    it('should remove todo doc', (done) => {
+
+        var hexId = todos[1]._id.toHexString();
+        var hexId1 = new ObjectID().toHexString();
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(hexId);
+            }).end((err) => {
+                if (err) {
+                    return done(err)
+                }
+            });
+        Todo.findById(hexId1).then((todo) => {
+            expect(todo).toNotExist();
+            done();
+        }).catch((e) => done(e));
+
+    });
+
+
+    it("should return 404 if todo not found", (done) => {
+        var hexId = new ObjectID().toHexString();
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(404)
+            .end(done);
+    })
+
+    it("should return 404 for non-object ids ", (done) => {
+        request(app)
+            .delete("/todos/123abc")
+            .expect(404)
+            .end(done);
     })
 });
